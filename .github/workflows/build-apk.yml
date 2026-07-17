@@ -1,0 +1,35 @@
+name: Build Jiwu APK
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+
+      - name: Generate platform scaffold
+        run: |
+          cd /tmp
+          flutter create --project-name jiwu_app --org com.luoqiu temp_project
+          cp -r /tmp/temp_project/android $GITHUB_WORKSPACE/
+          cp /tmp/temp_project/.gitignore $GITHUB_WORKSPACE/ 2>/dev/null || true
+
+      - run: flutter pub get
+        working-directory: ${{ github.workspace }}
+
+      - name: Build release APK
+        run: flutter build apk --release
+        working-directory: ${{ github.workspace }}
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-apk
+          path: ${{ github.workspace }}/build/app/outputs/flutter-apk/*.apk
