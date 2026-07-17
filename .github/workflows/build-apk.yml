@@ -22,7 +22,8 @@ jobs:
           cp -r /tmp/temp_project/android $GITHUB_WORKSPACE/
           cp /tmp/temp_project/.gitignore $GITHUB_WORKSPACE/ 2>/dev/null || true
           # Bump compileSdk to 36 for file_picker compatibility
-          sed -i 's/compileSdk = 34/compileSdk = 36/g; s/compileSdkVersion 34/compileSdkVersion 36/g' $GITHUB_WORKSPACE/android/app/build.gradle.kts $GITHUB_WORKSPACE/android/app/build.gradle 2>/dev/null || true
+          find $GITHUB_WORKSPACE/android -name "build.gradle*" -exec sed -i 's/compileSdk[[:space:]]*=[[:space:]]*[0-9][0-9]*/compileSdk = 36/g; s/compileSdkVersion[[:space:]]*[0-9][0-9]*/compileSdkVersion 36/g' {} +
+          cat $GITHUB_WORKSPACE/android/app/build.gradle* | grep -i compilesdk
 
       - run: flutter pub get
         working-directory: ${{ github.workspace }}
