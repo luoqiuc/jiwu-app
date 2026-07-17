@@ -18,9 +18,11 @@ jobs:
       - name: Generate platform scaffold
         run: |
           cd /tmp
-          flutter create --project-name jiwu_app --org com.luoqiu temp_project
+          flutter create --project-name jiwu_app --org com.example temp_project
           cp -r /tmp/temp_project/android $GITHUB_WORKSPACE/
           cp /tmp/temp_project/.gitignore $GITHUB_WORKSPACE/ 2>/dev/null || true
+          # Bump compileSdk to 36 for file_picker compatibility
+          sed -i 's/compileSdk = 34/compileSdk = 36/g; s/compileSdkVersion 34/compileSdkVersion 36/g' $GITHUB_WORKSPACE/android/app/build.gradle.kts $GITHUB_WORKSPACE/android/app/build.gradle 2>/dev/null || true
 
       - run: flutter pub get
         working-directory: ${{ github.workspace }}
