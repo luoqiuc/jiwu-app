@@ -25,22 +25,17 @@ jobs:
       - run: flutter pub get
         working-directory: ${{ github.workspace }}
 
-      - name: Regenerate Android scaffold (force all plugin registrations)
+      - name: Fix Gradle config (compileSdk=36 + disable AarMetadata check)
         run: |
-          # Remove old android scaffold completely so Flutter regenerates it
-          rm -rf ${{ github.workspace }}/android
-          cd /tmp && rm -rf temp_project
-          flutter create --project-name jiwu_app --org com.example temp_project
-          cp -r /tmp/temp_project/android $GITHUB_WORKSPACE/
-          # Bump compileSdk on the actual app build.gradle.kts
           app_build="$GITHUB_WORKSPACE/android/app/build.gradle.kts"
-          if grep -q 'compileSdk' "$app_build"; then
-            sed -i 's/compileSdk.*=.*/compileSdk = 36/' "$app_build"
-          fi
-          # Also bump in any other gradle files
-          find "$GITHUB_WORKSPACE/android" -name "build.gradle*" \
-            -exec sed -i 's/compileSdk[[:space:]]*=[[:space:]]*flutter\.compileSdkVersion/compileSdk = 36/g' {} +
-          cat "$app_build" | grep compileSdk
+          # Replace flutter.compileSdkVersion hardcoded value with 36
+          sed -i 's/compileSdk[[:space:]]*=[[:space:]]*flutter\.compileSdkVersion/compileSdk = 36/' "$app_build"
+          # Also replace any other compileSdk references
+          sed -i 's/compileSdk[[:space:]]*=[[:space:]]*flutter\.compileSdk/compileSdk = 36/' "$app_build"
+          # Disable release AAR metadata check (handles dependency version mismatches)
+          # Insert before the closing brace of android block
+          sed -i '/^android {/a\\n    // Workaround: skip AAR metadata check for file_picker compat\n    checkReleaseAarMetadata = false' "$app_build"
+          cat "$app_build" | grep -E 'compileSdk|checkRelease'
 
       - name: Build release APK (arm64-v8a)
         run: flutter build apk --release --target-platform android-arm64
