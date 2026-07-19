@@ -21,16 +21,26 @@ jobs:
           flutter create --project-name jiwu_app --org com.example temp_project
           cp -r /tmp/temp_project/android $GITHUB_WORKSPACE/
           cp /tmp/temp_project/.gitignore $GITHUB_WORKSPACE/ 2>/dev/null || true
-          # Bump compileSdk to 36 for file_picker compatibility
-          find $GITHUB_WORKSPACE/android -name "build.gradle*" -exec sed -i 's/compileSdk[[:space:]]*=[[:space:]]*[0-9][0-9]*/compileSdk = 36/g; s/compileSdkVersion[[:space:]]*[0-9][0-9]*/compileSdkVersion 36/g' {} +
-          cat $GITHUB_WORKSPACE/android/app/build.gradle* | grep -i compilesdk
 
       - run: flutter pub get
         working-directory: ${{ github.workspace }}
 
-      - name: Regenerate plugin registrant
+      - name: Regenerate Android scaffold (force all plugin registrations)
         run: |
-          rm -f ${{ github.workspace }}/android/app/src/main/java/io/flutter/plugins/GeneratedPluginRegistrant.*
+          # Remove old android scaffold completely so Flutter regenerates it
+          rm -rf ${{ github.workspace }}/android
+          cd /tmp && rm -rf temp_project
+          flutter create --project-name jiwu_app --org com.example temp_project
+          cp -r /tmp/temp_project/android $GITHUB_WORKSPACE/
+          # Bump compileSdk on the actual app build.gradle.kts
+          app_build="$GITHUB_WORKSPACE/android/app/build.gradle.kts"
+          if grep -q 'compileSdk' "$app_build"; then
+            sed -i 's/compileSdk.*=.*/compileSdk = 36/' "$app_build"
+          fi
+          # Also bump in any other gradle files
+          find "$GITHUB_WORKSPACE/android" -name "build.gradle*" \
+            -exec sed -i 's/compileSdk[[:space:]]*=[[:space:]]*flutter\.compileSdkVersion/compileSdk = 36/g' {} +
+          cat "$app_build" | grep compileSdk
 
       - name: Build release APK (arm64-v8a)
         run: flutter build apk --release --target-platform android-arm64
