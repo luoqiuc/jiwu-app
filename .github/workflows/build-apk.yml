@@ -25,17 +25,6 @@ jobs:
       - run: flutter pub get
         working-directory: ${{ github.workspace }}
 
-      - name: Fix Gradle config (compileSdk=36)
-        run: |
-          app_build="$GITHUB_WORKSPACE/android/app/build.gradle.kts"
-          echo "=== Before ==="
-          cat "$app_build"
-          echo "=== Fix ==="
-          sed -i 's/flutter\.compileSdkVersion/36/g' "$app_build"
-          echo "=== After ==="
-          cat "$app_build"
-          grep compileSdk "$app_build"
-
       - name: Build release APK (arm64-v8a)
         run: flutter build apk --release --target-platform android-arm64
         working-directory: ${{ github.workspace }}

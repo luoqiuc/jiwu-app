@@ -1,6 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:file_picker/file_picker.dart';
+import 'package:file_selector/file_selector.dart';
 import 'package:provider/provider.dart';
 import '../store/item_store.dart';
 import '../services/export_service.dart';
@@ -60,14 +60,22 @@ class _ExportImportPageState extends State<ExportImportPage> {
 
   Future<void> _selectImportFile() async {
     try {
-      final result = await FilePicker.pickFiles(
-        type: FileType.custom,
-        allowedExtensions: ['json'],
-        allowMultiple: false,
+      final typeGroup = const XTypeGroup(
+        label: 'JSON',
+        extensions: ['json'],
       );
+      final file = await openFile(acceptedTypeGroups: [typeGroup]);
 
-      if (result != null && result.files.isNotEmpty) {
-        final filePath = result.files.first.path!;
+      if (file != null) {
+        final filePath = file.path;
+        if (filePath == null) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('无法获取文件路径')),
+            );
+          }
+          return;
+        }
         setState(() {
           _selectedFilePath = filePath;
           _importPreview = null;
