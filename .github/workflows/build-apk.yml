@@ -28,6 +28,10 @@ jobs:
       - run: flutter pub get
         working-directory: ${{ github.workspace }}
 
+      - name: Regenerate plugin registrant
+        run: |
+          rm -f ${{ github.workspace }}/android/app/src/main/java/io/flutter/plugins/GeneratedPluginRegistrant.*
+
       - name: Build release APK (arm64-v8a)
         run: flutter build apk --release --target-platform android-arm64
         working-directory: ${{ github.workspace }}
